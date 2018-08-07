@@ -1,5 +1,23 @@
 #pragma once
 
+class FileHeader{
+public:
+  PS::S64 n_body;
+  PS::F64 time;
+  PS::S32 readAscii(FILE * fp) {
+    fscanf(fp, "%lf\n", &time);
+    fscanf(fp, "%lld\n", &n_body);
+    return n_body;
+  }
+  void writeAscii(FILE* fp) const {
+    // fprintf(fp, "%e\n", time);
+    fprintf(fp, "%lld\n", n_body);
+    fprintf(fp, "%e\n", time);
+  }
+};
+
+
+
 class FPLj{
 public:
   PS::S64    id;

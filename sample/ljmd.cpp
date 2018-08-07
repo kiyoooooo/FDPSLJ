@@ -119,15 +119,23 @@ int main(int argc, char *argv[]) {
   system_lj.initialize();
   PS::S32 n_loc    = 0;
   PS::F32 time_sys = 0.0;
+  sprintf(dir_name,"./result");
+
   if(PS::Comm::getRank() == 0) {
     setParticlesColdUniformSphere(system_lj, n_tot, n_loc);
   } else {
     system_lj.setNumberOfParticleLocal(n_loc);
   }
 
+
+  PS::F64vec box_size;
+  box_size = 4 * powf(4.0/3.0,1.0/3.0);
   const PS::F32 coef_ema = 0.3;
   PS::DomainInfo dinfo;
   dinfo.initialize(coef_ema);
+  dinfo.setBoundaryCondition(PS::BOUNDARY_CONDITION_PERIODIC_XYZ);
+  dinfo.setPosRootDomain(PS::F64vec(0.0,0.0,0.0),
+                         PS::F64vec(box_size.x,box_size.y,box_size.z));
   dinfo.decomposeDomainAll(system_lj);
   system_lj.exchangeParticle(dinfo);
   n_loc = system_lj.getNumberOfParticleLocal();
@@ -140,9 +148,28 @@ int main(int argc, char *argv[]) {
 				     system_lj,
 				     dinfo);
 
+  //output file                                                                                           
+  std::ofstream fpo1("placs.xyz");
 
   PS::S64 n_loop = 0;
+
   while(time_sys < time_end){
+
+
+
+    if(n_loop % 100 == 0 ){
+
+      fpo1<<system_lj.getNumberOfParticleGlobal()<<std::endl;
+      fpo1<<n_loop<<std::endl;
+      for(PS::S32 i=0;i<system_lj.getNumberOfParticleGlobal();i++){
+      fpo1<<"H"<<" "<<system_lj[i].pos.x<<" "<<system_lj[i].pos.y<<" "<<system_lj[i].pos.z<<std::endl;
+      }
+      
+    }
+
+
+
+
     kick(system_lj, dt * 0.5);
 
     time_sys += dt;
@@ -161,10 +188,11 @@ int main(int argc, char *argv[]) {
 
 
     kick(system_lj, dt * 0.5);
-
+    
     n_loop++;
   }
 
+  
 
 
 

@@ -81,7 +81,7 @@ void kick(Tpsys & system,
   PS::S32 n = system.getNumberOfParticleLocal();
   for(PS::S32 i = 0; i < n; i++) {
     //    system[i].vel += 0.50 * (system[i].force + system[i].prevforce) * dt / system[i].mass;
-    system[i].vel  += system[i].acc * dt;
+    system[i].vel  += system[i].force * dt;
   }
 }
 
@@ -96,7 +96,40 @@ void drift(Tpsys & system,
 }
 
 
-PS::F64 FPLj::eps = 1.0;
+template<class Tpsys,class Tdinfo>
+void PeriodicBoundaryCondition(Tpsys & system,const Tdinfo &dinfo){
+  PS::S32 n = system.getNumberOfParticleLocal();
+  const PS::F64ort domain = dinfo.getPosRootDomain();
+  const PS::F64vec length = domain.getFullLength();
+
+  for(int i=0; i<n; i++){
+    for(int k=0;k<3;k++){
+      if(system[i].pos.x <  domain.low_.x){
+        system[i].pos.x  += length.x;
+      }
+      if(system[i].pos.x >= domain.high_.x){
+        system[i].pos.x  -= length.x;
+      }
+      if(system[i].pos.y <  domain.low_.y){
+        system[i].pos.y  += length.y;
+      }
+      if(system[i].pos.y >= domain.high_.y){
+        system[i].pos.y  -= length.y;
+      }
+      if(system[i].pos.z <  domain.low_.z){
+        system[i].pos.z  += length.z;
+      }
+      if(system[i].pos.z >= domain.high_.z){
+        system[i].pos.z  -= length.z;
+      }
+    }
+  }
+}
+
+
+
+//PS::F64 FPLj::rcut  = 1.0;
+PS::F64 FPLj::eps   = 1.0;
 PS::F64 FPLj::sigma = 1.0;
 
 
@@ -136,17 +169,19 @@ int main(int argc, char *argv[]) {
   dinfo.setBoundaryCondition(PS::BOUNDARY_CONDITION_PERIODIC_XYZ);
   dinfo.setPosRootDomain(PS::F64vec(0.0,0.0,0.0),
                          PS::F64vec(box_size.x,box_size.y,box_size.z));
+  PeriodicBoundaryCondition(system_lj,dinfo);
   dinfo.decomposeDomainAll(system_lj);
   system_lj.exchangeParticle(dinfo);
   n_loc = system_lj.getNumberOfParticleLocal();
 
-  PS::TreeForForceLong<FPLj, FPLj, FPLj>::Monopole tree_lj;
+  PS::TreeForForceShort<ForceLj, EPLj, EPLj>::Gather tree_lj;
+  for(int i=0;i<system_lj.getNumberOfParticleLocal();i++)
+    system_lj[i].search_radius = CUTOFF_LENGTH;
   tree_lj.initialize(n_tot, theta, n_leaf_limit, n_group_limit);
 
-  tree_lj.calcForceAllAndWriteBack(CalcLj<FPLj>,
-				     CalcLj<PS::SPJMonopole>,
-				     system_lj,
-				     dinfo);
+  tree_lj.calcForceAllAndWriteBack(CalcLj<EPLj>,
+				   system_lj,
+				   dinfo);
 
   //output file                                                                                           
   std::ofstream fpo1("placs.xyz");
@@ -170,10 +205,12 @@ int main(int argc, char *argv[]) {
 
 
 
-    kick(system_lj, dt * 0.5);
+    kick(system_lj, dt * 0.5);//why "*0.5" ?
 
     time_sys += dt;
     drift(system_lj, dt);
+    PeriodicBoundaryCondition(system_lj,dinfo);
+    system_lj.adjustPositionIntoRootDomain(dinfo);
 
     if(n_loop % 4 == 0){
       dinfo.decomposeDomainAll(system_lj);
@@ -181,8 +218,7 @@ int main(int argc, char *argv[]) {
 
     system_lj.exchangeParticle(dinfo);
 
-    tree_lj.calcForceAllAndWriteBack(CalcLj<FPLj>,
-				     CalcLj<PS::SPJMonopole>,
+    tree_lj.calcForceAllAndWriteBack(CalcLj<EPLj>,
 				     system_lj,
 				     dinfo);
 

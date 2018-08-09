@@ -19,13 +19,14 @@ public:
 class ForceLj {
 public:
   PS::F64vec force;
-  PS::F64 pot;
+  PS::F64    pot;
   void clear(){
     force = 0.0;
     pot = 0.0;
   }
 };
 
+const PS::F64 CUTOFF_LENGTH = 3.0;
 class FPLj{
 public:
   PS::S64    id;
@@ -41,7 +42,7 @@ public:
   static PS::F64 sigma;
 
   PS::F64 getRSearch() const {
-    return search_radius;
+    return CUTOFF_LENGTH;
   }
 
   PS::F64vec getPos() const {
@@ -58,7 +59,7 @@ public:
     search_radius = fp.search_radius;
   }
   
-  void copyFromForce(const FPLj & f) {
+  void copyFromForce(const ForceLj & f) {
     force = f.force;
     pot = f.pot;
   }
@@ -92,7 +93,7 @@ public:
 
 
 
-const PS::F64 CUTOFF_LENGTH = 3.0;
+
 class EPLj {
 public:
   PS::S32 id;
@@ -124,11 +125,11 @@ public:
 
 
 template<class TParticleJ>
-void CalcLj(const FPLj *ep_i,
+void CalcLj(const TParticleJ *ep_i,
 	    const PS::S32 n_ip,
 	    const TParticleJ *ep_j,
 	    const PS::S32 n_jp,
-	    FPLj * force){
+	    ForceLj * force){
   PS::F64 ce12 = 4 * FPLj::eps * pow(FPLj::sigma,12);
   PS::F64 ce06 = 4 * FPLj::eps * pow(FPLj::sigma,6);
   PS::F64 cf12 = ce12 * 12;

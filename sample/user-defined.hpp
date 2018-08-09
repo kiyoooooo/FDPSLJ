@@ -58,7 +58,7 @@ public:
     search_radius = fp.search_radius;
   }
   
-  void copyFromForce(const ForceLj & f) {
+  void copyFromForce(const FPLj & f) {
     force = f.force;
     pot = f.pot;
   }
@@ -124,7 +124,7 @@ public:
 
 
 template<class TParticleJ>
-void CalcLj(const EPLj *ep_i,
+void CalcLj(const FPLj *ep_i,
 	    const PS::S32 n_ip,
 	    const TParticleJ *ep_j,
 	    const PS::S32 n_jp,
@@ -133,7 +133,7 @@ void CalcLj(const EPLj *ep_i,
   PS::F64 ce06 = 4 * FPLj::eps * pow(FPLj::sigma,6);
   PS::F64 cf12 = ce12 * 12;
   PS::F64 cf06 = ce06 * 6;
-  PS::F64 rcut_sq = pow(FPLj::CUTOFF_LENGTH,2.0);
+  PS::F64 rcut_sq = pow(CUTOFF_LENGTH,2.0);
   for(PS::S32 i = 0; i < n_ip; i++){
     PS::F64vec xi    = ep_i[i].pos;
     PS::F64vec forcei    = 0.0;

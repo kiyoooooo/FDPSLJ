@@ -174,12 +174,12 @@ int main(int argc, char *argv[]) {
   system_lj.exchangeParticle(dinfo);
   n_loc = system_lj.getNumberOfParticleLocal();
 
-  PS::TreeForForceShort<ForceLj, EPLj, EPLj>::Gather tree_lj;
+  PS::TreeForForceShort<FPLj, FPLj, FPLj>::Gather tree_lj;
   for(int i=0;i<system_lj.getNumberOfParticleLocal();i++)
     system_lj[i].search_radius = CUTOFF_LENGTH;
   tree_lj.initialize(n_tot, theta, n_leaf_limit, n_group_limit);
 
-  tree_lj.calcForceAllAndWriteBack(CalcLj<EPLj>,
+  tree_lj.calcForceAllAndWriteBack(CalcLj<FPLj>,
 				   system_lj,
 				   dinfo);
 
@@ -218,7 +218,7 @@ int main(int argc, char *argv[]) {
 
     system_lj.exchangeParticle(dinfo);
 
-    tree_lj.calcForceAllAndWriteBack(CalcLj<EPLj>,
+    tree_lj.calcForceAllAndWriteBack(CalcLj<FPLj>,
 				     system_lj,
 				     dinfo);
 

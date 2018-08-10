@@ -5,6 +5,70 @@
 #include<particle_simulator.hpp>
 #include "user-defined.hpp"
 
+#include <cassert>
+
+
+
+template<class System>
+void initialPlace(System &sys, const PS::S32 num_par_axis, const PS::F64 initDistance){
+  PS::S32 nx,ny,nz,jx,jy,jz,n=0;
+  nx=num_par_axis; 
+  ny=num_par_axis; 
+  nz=num_par_axis; 
+  for (jx=1;jx<=nx;jx++){
+    for (jy=1;jy<=ny;jy++){
+      for (jz=1;jz<=nz;jz++){
+	sys[n].pos.x=0.0+(jx-1)*initDistance;
+	sys[n].pos.y=0.0+(jy-1)*initDistance;
+	sys[n].pos.z=0.0+(jz-1)*initDistance;
+	n+=1;
+	sys[n].pos.x=0.0+(jx-1)*initDistance;
+	sys[n].pos.y=initDistance/2.0+(jy-1)*initDistance;
+	sys[n].pos.z=initDistance/2.0+(jz-1)*initDistance;
+	n+=1;
+	sys[n].pos.x=initDistance/2.0+(jx-1)*initDistance;
+	sys[n].pos.y=initDistance/2.0+(jy-1)*initDistance;
+	sys[n].pos.z=0.0+(jz-1)*initDistance;
+	n+=1;
+	sys[n].pos.x=initDistance/2.0+(jx-1)*initDistance;
+	sys[n].pos.y=0.0+(jy-1)*initDistance;
+	sys[n].pos.z=initDistance/2.0+(jz-1)*initDistance;
+	n+=1;
+      }
+    }
+  }
+}
+
+
+
+template<class System>
+void
+make_conf(System &sys, const PS::F64 L) {
+  PS::MTTS mt;
+  mt.init_genrand(0);
+  //std::mt19937 mt(1);
+  //std::uniform_real_distribution<double> ud(0.0, 1.0);
+  const double V0 = 1.0;
+  const int il = static_cast<int>(L);
+  PS::S32 n_total = L * L * L;
+  sys.setNumberOfParticleLocal(n_total);
+  int n = 0;
+  for (int ix = 0; ix < L; ix++) {
+    for (int iy = 0; iy < L; iy++) {
+      for (int iz = 0; iz < L; iz++) {
+        double z = mt.genrand_res53() * 2.0 - 1.0;
+        double phi = mt.genrand_res53() * M_PI;
+        sys[n].vel.x = V0 * sqrt(1 - z * z) * cos(phi);
+        sys[n].vel.y = V0 * sqrt(1 - z * z) * sin(phi);
+        sys[n].vel.z = V0 * z;
+        sys[n].pos.x = ix + 0.5;
+        sys[n].pos.y = iy + 0.5;
+        sys[n].pos.z = iz + 0.5;
+        n++;
+      }
+    }
+  }
+}
 
 
 void makeColdUniformSphere(const PS::F64 mass_glb,
@@ -145,8 +209,12 @@ int main(int argc, char *argv[]) {
   PS::F32 dt_diag       = 1.0 / 8.0;
   PS::F32 dt_snap       = 1.0;
   char    dir_name[1024];
-  PS::S64 n_tot         = 1024;
   PS::S32 c;
+  PS::S32 num_par_axis  =5;
+  PS::S64 n_tot         =4*num_par_axis*num_par_axis*num_par_axis;
+  PS::F64 rho           =3.0;
+  PS::F64 initDistance  =pow(4.0/rho,1.0/3.0); 
+
 
   PS::ParticleSystem<FPLj> system_lj;
   system_lj.initialize();
@@ -155,21 +223,25 @@ int main(int argc, char *argv[]) {
   sprintf(dir_name,"./result");
 
   if(PS::Comm::getRank() == 0) {
-    setParticlesColdUniformSphere(system_lj, n_tot, n_loc);
+    //    setParticlesColdUniformSphere(system_lj, n_tot, n_loc);
+    system_lj.setNumberOfParticleLocal(n_tot);
+    initialPlace< PS::ParticleSystem<FPLj> >(system_lj, num_par_axis, initDistance);
+    //    return 0;
   } else {
     system_lj.setNumberOfParticleLocal(n_loc);
   }
 
-
   PS::F64vec box_size;
-  box_size = 4 * powf(4.0/3.0,1.0/3.0);
+  box_size = 4 * initDistance;
   const PS::F32 coef_ema = 0.3;
   PS::DomainInfo dinfo;
   dinfo.initialize(coef_ema);
   dinfo.setBoundaryCondition(PS::BOUNDARY_CONDITION_PERIODIC_XYZ);
   dinfo.setPosRootDomain(PS::F64vec(0.0,0.0,0.0),
                          PS::F64vec(box_size.x,box_size.y,box_size.z));
-  PeriodicBoundaryCondition(system_lj,dinfo);
+
+  system_lj.adjustPositionIntoRootDomain(dinfo);
+  //PeriodicBoundaryCondition(system_lj,dinfo);
   dinfo.decomposeDomainAll(system_lj);
   system_lj.exchangeParticle(dinfo);
   n_loc = system_lj.getNumberOfParticleLocal();
@@ -189,39 +261,40 @@ int main(int argc, char *argv[]) {
   PS::S64 n_loop = 0;
 
   while(time_sys < time_end){
-
-
-
-    if(n_loop % 100 == 0 ){
+    if(n_loop % 1 == 0 ){
+    //    if(n_loop ==  1 ){
 
       fpo1<<system_lj.getNumberOfParticleGlobal()<<std::endl;
       fpo1<<n_loop<<std::endl;
       for(PS::S32 i=0;i<system_lj.getNumberOfParticleGlobal();i++){
       fpo1<<"H"<<" "<<system_lj[i].pos.x<<" "<<system_lj[i].pos.y<<" "<<system_lj[i].pos.z<<std::endl;
       }
-      
     }
-
-
-
-
     kick(system_lj, dt * 0.5);//why "*0.5" ?
 
     time_sys += dt;
     drift(system_lj, dt);
-    PeriodicBoundaryCondition(system_lj,dinfo);
+    //PeriodicBoundaryCondition(system_lj,dinfo);
     system_lj.adjustPositionIntoRootDomain(dinfo);
 
     if(n_loop % 4 == 0){
       dinfo.decomposeDomainAll(system_lj);
     }
-
     system_lj.exchangeParticle(dinfo);
 
+    PS::F64ort boundary = dinfo.getPosRootDomain();
+    for(int i=0;i<system_lj.getNumberOfParticleLocal();i++){
+      assert(boundary.low_.x <= system_lj[i].pos.x);
+      assert(boundary.low_.y <= system_lj[i].pos.y);
+      assert(boundary.low_.z <= system_lj[i].pos.z);
+
+      assert(boundary.high_.x > system_lj[i].pos.x);
+      assert(boundary.high_.y > system_lj[i].pos.y);
+      assert(boundary.high_.z > system_lj[i].pos.z);
+    }
     tree_lj.calcForceAllAndWriteBack(CalcLj<EPLj>,
 				     system_lj,
 				     dinfo);
-
 
     kick(system_lj, dt * 0.5);
     

@@ -142,7 +142,7 @@ void CalcLj(const TParticleJ *ep_i,
     for(PS::S32 j = 0; j < n_jp; j++){
       PS::F64vec rij  = xi - ep_j[j].pos;
       PS::F64    r2   = rij * rij;
-      if(0.0 <= r2 && r2<=rcut_sq){
+      if(0.0 < r2 && r2<=rcut_sq){
 	PS::F64    r2i  = 1 / r2;
 	PS::F64    r06i = r2i * r2i * r2i;
 	PS::F64    r12i = r06i * r06i;

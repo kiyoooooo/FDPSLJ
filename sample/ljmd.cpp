@@ -205,16 +205,16 @@ int main(int argc, char *argv[]) {
   PS::S32 n_leaf_limit  = 8;
   PS::S32 n_group_limit = 64;
   PS::F32 time_end      = 10.0;
-  PS::F32 dt            = 1.0 / 128.0;
+  PS::F32 dt            = 1.0 / 300000.0;
   PS::F32 dt_diag       = 1.0 / 8.0;
   PS::F32 dt_snap       = 1.0;
   char    dir_name[1024];
   PS::S32 c;
   PS::S32 num_par_axis  =5;
   PS::S64 n_tot         =4*num_par_axis*num_par_axis*num_par_axis;
-  PS::F64 rho           =3.0;
+  PS::F64 rho           =2.999999;
   PS::F64 initDistance  =pow(4.0/rho,1.0/3.0); 
-
+  PS::S32 nstep         =100;
 
   PS::ParticleSystem<FPLj> system_lj;
   system_lj.initialize();
@@ -259,8 +259,9 @@ int main(int argc, char *argv[]) {
   std::ofstream fpo1("placs.xyz");
 
   PS::S64 n_loop = 0;
-
-  while(time_sys < time_end){
+  PS::S32 tt;
+  for(tt=0;tt<nstep;tt++){
+    //  while(time_sys < time_end){
     if(n_loop % 1 == 0 ){
     //    if(n_loop ==  1 ){
 
@@ -297,7 +298,7 @@ int main(int argc, char *argv[]) {
 				     dinfo);
 
     kick(system_lj, dt * 0.5);
-    
+    std::cout<<tt<<std::endl;
     n_loop++;
   }
 

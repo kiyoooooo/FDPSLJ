@@ -147,7 +147,8 @@ void CalcLj(const TParticleJ *ep_i,
 	PS::F64    r06i = r2i * r2i * r2i;
 	PS::F64    r12i = r06i * r06i;
 	PS::F64    ep   = ce12 * r12i - ce06 * r06i;
-	PS::F64    fc   = - (cf12 * r12i - cf06 * r06i)*r2i;
+	//	PS::F64    fc   = - (cf12 * r12i - cf06 * r06i)*r2i;
+	PS::F64    fc   =  (cf12 * r12i - cf06 * r06i)*r2i;
 	forcei += fc * rij; 
 	poti += ep; 
       }

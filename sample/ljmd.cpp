@@ -219,16 +219,16 @@ int main(int argc, char *argv[]) {
   PS::S32 n_leaf_limit  = 8;
   PS::S32 n_group_limit = 64;
   PS::F32 time_end      = 10.0;
-  PS::F64 dt            = 1.0 / 1000.0;
+  PS::F64 dt            = 0.0050;
   PS::F32 dt_diag       = 1.0 / 8.0;
   PS::F32 dt_snap       = 1.0;
   char    dir_name[1024];
   PS::S32 c;
   PS::S32 num_par_axis  =5;
   PS::S64 n_tot         =4*num_par_axis*num_par_axis*num_par_axis;
-  PS::F64 rho           =1.0;
+  PS::F64 rho           =0.3;
   PS::F64 initDistance  =pow(4.0/rho,1.0/3.0); 
-  PS::S32 nstep         =100;
+  PS::S32 nstep         =1000;
 
   PS::ParticleSystem<FPLj> system_lj;
   system_lj.initialize();

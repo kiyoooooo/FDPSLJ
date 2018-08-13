@@ -12,6 +12,8 @@
 template<class System>
 void initialPlace(System &sys, const PS::S32 num_par_axis, const PS::F64 initDistance){
   PS::S32 nx,ny,nz,jx,jy,jz,n=0;
+  PS::MTTS mt;
+  mt.init_genrand(0);
   nx=num_par_axis; 
   ny=num_par_axis; 
   nz=num_par_axis; 
@@ -21,18 +23,30 @@ void initialPlace(System &sys, const PS::S32 num_par_axis, const PS::F64 initDis
 	sys[n].pos.x=0.0+(jx-1)*initDistance;
 	sys[n].pos.y=0.0+(jy-1)*initDistance;
 	sys[n].pos.z=0.0+(jz-1)*initDistance;
+	sys[n].vel.x=mt.genrand_res53() * 2.0 - 1.0;
+	sys[n].vel.y=mt.genrand_res53() * 2.0 - 1.0;
+	sys[n].vel.z=mt.genrand_res53() * 2.0 - 1.0;
 	n+=1;
 	sys[n].pos.x=0.0+(jx-1)*initDistance;
 	sys[n].pos.y=initDistance/2.0+(jy-1)*initDistance;
 	sys[n].pos.z=initDistance/2.0+(jz-1)*initDistance;
+	sys[n].vel.x=mt.genrand_res53() * 2.0 - 1.0;
+	sys[n].vel.y=mt.genrand_res53() * 2.0 - 1.0;
+	sys[n].vel.z=mt.genrand_res53() * 2.0 - 1.0;
 	n+=1;
 	sys[n].pos.x=initDistance/2.0+(jx-1)*initDistance;
 	sys[n].pos.y=initDistance/2.0+(jy-1)*initDistance;
 	sys[n].pos.z=0.0+(jz-1)*initDistance;
+	sys[n].vel.x=mt.genrand_res53() * 2.0 - 1.0;
+	sys[n].vel.y=mt.genrand_res53() * 2.0 - 1.0;
+	sys[n].vel.z=mt.genrand_res53() * 2.0 - 1.0;
 	n+=1;
 	sys[n].pos.x=initDistance/2.0+(jx-1)*initDistance;
 	sys[n].pos.y=0.0+(jy-1)*initDistance;
 	sys[n].pos.z=initDistance/2.0+(jz-1)*initDistance;
+	sys[n].vel.x=mt.genrand_res53() * 2.0 - 1.0;
+	sys[n].vel.y=mt.genrand_res53() * 2.0 - 1.0;
+	sys[n].vel.z=mt.genrand_res53() * 2.0 - 1.0;
 	n+=1;
       }
     }
@@ -205,14 +219,14 @@ int main(int argc, char *argv[]) {
   PS::S32 n_leaf_limit  = 8;
   PS::S32 n_group_limit = 64;
   PS::F32 time_end      = 10.0;
-  PS::F32 dt            = 1.0 / 300000.0;
+  PS::F64 dt            = 1.0 / 1000.0;
   PS::F32 dt_diag       = 1.0 / 8.0;
   PS::F32 dt_snap       = 1.0;
   char    dir_name[1024];
   PS::S32 c;
   PS::S32 num_par_axis  =5;
   PS::S64 n_tot         =4*num_par_axis*num_par_axis*num_par_axis;
-  PS::F64 rho           =2.999999;
+  PS::F64 rho           =1.0;
   PS::F64 initDistance  =pow(4.0/rho,1.0/3.0); 
   PS::S32 nstep         =100;
 
@@ -226,21 +240,22 @@ int main(int argc, char *argv[]) {
     //    setParticlesColdUniformSphere(system_lj, n_tot, n_loc);
     system_lj.setNumberOfParticleLocal(n_tot);
     initialPlace< PS::ParticleSystem<FPLj> >(system_lj, num_par_axis, initDistance);
-    //    return 0;
+
   } else {
     system_lj.setNumberOfParticleLocal(n_loc);
   }
-
+  //  return 0;
   PS::F64vec box_size;
-  box_size = 4 * initDistance;
+
+  box_size = num_par_axis * initDistance;
   const PS::F32 coef_ema = 0.3;
   PS::DomainInfo dinfo;
   dinfo.initialize(coef_ema);
   dinfo.setBoundaryCondition(PS::BOUNDARY_CONDITION_PERIODIC_XYZ);
+
   dinfo.setPosRootDomain(PS::F64vec(0.0,0.0,0.0),
                          PS::F64vec(box_size.x,box_size.y,box_size.z));
-
-  system_lj.adjustPositionIntoRootDomain(dinfo);
+  //  system_lj.adjustPositionIntoRootDomain(dinfo);
   //PeriodicBoundaryCondition(system_lj,dinfo);
   dinfo.decomposeDomainAll(system_lj);
   system_lj.exchangeParticle(dinfo);
@@ -264,7 +279,6 @@ int main(int argc, char *argv[]) {
     //  while(time_sys < time_end){
     if(n_loop % 1 == 0 ){
     //    if(n_loop ==  1 ){
-
       fpo1<<system_lj.getNumberOfParticleGlobal()<<std::endl;
       fpo1<<n_loop<<std::endl;
       for(PS::S32 i=0;i<system_lj.getNumberOfParticleGlobal();i++){
@@ -272,12 +286,10 @@ int main(int argc, char *argv[]) {
       }
     }
     kick(system_lj, dt * 0.5);//why "*0.5" ?
-
     time_sys += dt;
     drift(system_lj, dt);
     //PeriodicBoundaryCondition(system_lj,dinfo);
     system_lj.adjustPositionIntoRootDomain(dinfo);
-
     if(n_loop % 4 == 0){
       dinfo.decomposeDomainAll(system_lj);
     }
@@ -298,7 +310,7 @@ int main(int argc, char *argv[]) {
 				     dinfo);
 
     kick(system_lj, dt * 0.5);
-    std::cout<<tt<<std::endl;
+    std::cout<<"time="<<tt<<std::endl;
     n_loop++;
   }
 

@@ -10,8 +10,9 @@
 
 
 template<class System>
-void initialPlace(System &sys, const PS::S32 num_par_axis, const PS::F64 initDistance){
-  PS::S32 nx,ny,nz,jx,jy,jz,n=0;
+void initialPlace(System &sys, const PS::S32 num_par_axis, const PS::F64 initDistance, const PS::S32 n_tot){
+  PS::S32 nx,ny,nz,jx,jy,jz,n=0,i;
+  PS::F64 vx=0.0,vy=0.0,vz=0.0;
   PS::MTTS mt;
   mt.init_genrand(0);
   nx=num_par_axis; 
@@ -48,11 +49,56 @@ void initialPlace(System &sys, const PS::S32 num_par_axis, const PS::F64 initDis
 	sys[n].vel.y=mt.genrand_res53() * 2.0 - 1.0;
 	sys[n].vel.z=mt.genrand_res53() * 2.0 - 1.0;
 	n+=1;
+	//    std::cout<<"when i=10 "<<sys[n-1].vel.x<<" "<<sys[n-1].vel.y<<" "<<sys[n-1].vel.z<<std::endl;
+	//	std::cout<<"mt="<<mt.genrand_res53()<<std::endl;
       }
     }
   }
+  for(i=0;i<n_tot;i++){
+    vx+=sys[i].vel.x;
+    vy+=sys[i].vel.y;
+    vz+=sys[i].vel.z;
+  }
+  vx/=(PS::F64)n_tot;
+  vy/=(PS::F64)n_tot;
+  vz/=(PS::F64)n_tot;
+  for(i=0;i<n_tot;i++){
+    sys[i].vel.x-=vx;
+    sys[i].vel.y-=vy;
+    sys[i].vel.z-=vz;
+    }
+  vx=0.0;
+  vy=0.0;
+  vz=0.0;
+  for(i=0;i<n_tot;i++){
+    //  std::cout<<"when i=10 "<<sys[i].vel.x<<" "<<sys[i].vel.y<<" "<<sys[i].vel.z<<std::endl;
+    vx+=sys[i].vel.x;
+    vy+=sys[i].vel.y;
+    vz+=sys[i].vel.z;
+    if(i==10)std::cout<<"when i=10 "<<sys[i].vel.x<<" "<<sys[i].vel.y<<" "<<sys[i].vel.z<<std::endl;
+  }
+  std::cout<<"!!!!!firstallvx="<<vx<<" "<<"firstallvy="<<vy<<" "<<"firstallvz"<<" "<<vz<<std::endl;
 }
 
+
+
+
+
+
+template<class System>
+void checkallvel(System &sys, const PS::S32 num_par_axis, const PS::F64 initDistance, const PS::S32 n_tot){
+  PS::S32 nx,ny,nz,jx,jy,jz,n=0,i;
+  PS::F64 vx=0,vy=0,vz=0;
+  for(i=0;i<n_tot;i++){
+    vx+=sys[i].vel.x;
+    vy+=sys[i].vel.y;
+    vz+=sys[i].vel.z;
+    if(i==10)std::cout<<10<<sys[i].vel.x<<" "<<sys[i].vel.y<<" "<<sys[i].vel.z<<std::endl;
+  }
+
+  std::cout<<"allvx="<<vx<<" "<<"allvy="<<vy<<" "<<"allvz"<<" "<<vz<<std::endl;
+ 
+}
 
 
 template<class System>
@@ -239,7 +285,7 @@ int main(int argc, char *argv[]) {
   if(PS::Comm::getRank() == 0) {
     //    setParticlesColdUniformSphere(system_lj, n_tot, n_loc);
     system_lj.setNumberOfParticleLocal(n_tot);
-    initialPlace< PS::ParticleSystem<FPLj> >(system_lj, num_par_axis, initDistance);
+    initialPlace< PS::ParticleSystem<FPLj> >(system_lj, num_par_axis, initDistance, n_tot);
 
   } else {
     system_lj.setNumberOfParticleLocal(n_loc);
@@ -285,10 +331,11 @@ int main(int argc, char *argv[]) {
       fpo1<<"H"<<" "<<system_lj[i].pos.x<<" "<<system_lj[i].pos.y<<" "<<system_lj[i].pos.z<<std::endl;
       }
     }
-    kick(system_lj, dt * 0.5);//why "*0.5" ?
+    kick(system_lj, dt * 0.5);
     time_sys += dt;
     drift(system_lj, dt);
-    //PeriodicBoundaryCondition(system_lj,dinfo);
+
+    checkallvel< PS::ParticleSystem<FPLj> >(system_lj, num_par_axis, initDistance, n_tot);
     system_lj.adjustPositionIntoRootDomain(dinfo);
     if(n_loop % 4 == 0){
       dinfo.decomposeDomainAll(system_lj);

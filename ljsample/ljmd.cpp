@@ -98,9 +98,9 @@ void initialPlace(System &sys,
     vx+=sys[i].vel.x;
     vy+=sys[i].vel.y;
     vz+=sys[i].vel.z;
-    if(i==10)std::cout<<"when i=10 "<<sys[i].vel.x<<" "<<sys[i].vel.y<<" "<<sys[i].vel.z<<std::endl;
+    //if(i==10)std::cout<<"when i=10 "<<sys[i].vel.x<<" "<<sys[i].vel.y<<" "<<sys[i].vel.z<<std::endl;
   }
-  std::cout<<"!!!!!firstallvx="<<vx<<" "<<"firstallvy="<<vy<<" "<<"firstallvz"<<" "<<vz<<std::endl;
+  //std::cout<<"!!!!!firstallvx="<<vx<<" "<<"firstallvy="<<vy<<" "<<"firstallvz"<<" "<<vz<<std::endl;
 }
 
 
@@ -383,7 +383,7 @@ int main(int argc, char *argv[]) {
 				     dinfo);
 
     kick(system_lj, dt * 0.5);
-    std::cout<<"time="<<tt<<std::endl;
+    //std::cout<<"time="<<tt<<std::endl;
 
 
     CalcEnergy< PS::ParticleSystem<FPLj> >(system_lj, etot, ekin, epot, n_tot);

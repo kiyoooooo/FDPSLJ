@@ -30,7 +30,7 @@ const PS::F64 CUTOFF_LENGTH = 3.0;
 class FPLj{
 public:
   PS::S64    id;
-  PS::F64    mass;
+  static  PS::F64    mass;//一時的
   PS::F64vec pos;
   PS::F64vec vel;
   PS::F64vec force;

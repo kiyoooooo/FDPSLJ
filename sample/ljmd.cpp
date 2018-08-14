@@ -8,9 +8,31 @@
 #include <cassert>
 
 
+template<class System>
+void CalcEnergy(System &sys,
+		PS::F64 & etot,
+		PS::F64 & ekin,
+		PS::F64 & epot,
+		const PS::S32 n_tot){
+  etot = ekin = epot = 0.0;
+  PS::S32 i;
+  for(i=0;i<n_tot;i++){
+    ekin += sys[i].mass * (sys[i].vel * sys[i].vel);
+    epot += sys[i].pot;
+  }
+  ekin *= 0.50;
+  etot = ekin + epot;
+}
+
+
+
+
 
 template<class System>
-void initialPlace(System &sys, const PS::S32 num_par_axis, const PS::F64 initDistance, const PS::S32 n_tot){
+void initialPlace(System &sys,
+		  const PS::S32 num_par_axis,
+		  const PS::F64 initDistance,
+		  const PS::S32 n_tot){
   PS::S32 nx,ny,nz,jx,jy,jz,n=0,i;
   PS::F64 vx=0.0,vy=0.0,vz=0.0;
   PS::MTTS mt;
@@ -255,7 +277,7 @@ void PeriodicBoundaryCondition(Tpsys & system,const Tdinfo &dinfo){
 //PS::F64 FPLj::rcut  = 1.0;
 PS::F64 FPLj::eps   = 1.0;
 PS::F64 FPLj::sigma = 1.0;
-
+PS::F64 FPLj::mass  = 1.0;
 
 int main(int argc, char *argv[]) {
 
@@ -318,9 +340,10 @@ int main(int argc, char *argv[]) {
 
   //output file                                                                                           
   std::ofstream fpo1("placs.xyz");
-
+  std::ofstream fpo_DrawEnergy("DrawEnergy.dat");
   PS::S64 n_loop = 0;
   PS::S32 tt;
+  PS::F64 etot, ekin, epot;
   for(tt=0;tt<nstep;tt++){
     //  while(time_sys < time_end){
     if(n_loop % 1 == 0 ){
@@ -335,7 +358,9 @@ int main(int argc, char *argv[]) {
     time_sys += dt;
     drift(system_lj, dt);
 
-    checkallvel< PS::ParticleSystem<FPLj> >(system_lj, num_par_axis, initDistance, n_tot);
+    //運動量が保存しているか確認するため
+    //checkallvel< PS::ParticleSystem<FPLj> >(system_lj, num_par_axis, initDistance, n_tot);
+
     system_lj.adjustPositionIntoRootDomain(dinfo);
     if(n_loop % 4 == 0){
       dinfo.decomposeDomainAll(system_lj);
@@ -358,6 +383,14 @@ int main(int argc, char *argv[]) {
 
     kick(system_lj, dt * 0.5);
     std::cout<<"time="<<tt<<std::endl;
+
+
+    CalcEnergy< PS::ParticleSystem<FPLj> >(system_lj, etot, ekin, epot, n_tot);
+    fpo_DrawEnergy<<tt<<" "<<etot<<" "<<ekin<<" "<<epot<<std::endl;
+
+
+
+
     n_loop++;
   }
 

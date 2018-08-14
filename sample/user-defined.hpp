@@ -150,7 +150,7 @@ void CalcLj(const TParticleJ *ep_i,
 	//	PS::F64    fc   = - (cf12 * r12i - cf06 * r06i)*r2i;
 	PS::F64    fc   =  (cf12 * r12i - cf06 * r06i)*r2i;
 	forcei += fc * rij; 
-	poti += ep; 
+	poti += ep * 0.5; 
       }
     }
     //force[i].prevforce = force[i].force;

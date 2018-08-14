@@ -1,0 +1,15 @@
+all: a.out
+
+CC=g++ 
+
+FDPS_PATH= ../../FDPS-master/src/
+CXXFLAGS=-I$(FDPS_PATH)
+#CXXFLAGS += -DPARTICLE_SIMULATOR_MPI_PARALLEL
+#LDFLAGS=-lmpi -lmpi_cxx
+LDFLAGS = -L/usr/local/opt/open-mpi/lib -lmpi -lmpi_cxx
+LDFLAGS +=-L/usr/local/opt/llvm/lib -Wl,-rpath,/usr/local/opt/llvm/lib
+a.out: ljmd.cpp
+	$(CC) $(CXXFLAGS) $(LDFLAGS) $< -o $@
+
+clean:
+	rm -f a.out

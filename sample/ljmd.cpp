@@ -8,6 +8,7 @@
 #include <cassert>
 
 
+
 template<class System>
 void CalcEnergy(System &sys,
 		PS::F64 & etot,
